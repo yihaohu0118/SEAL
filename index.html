@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+
+  <meta name="title" content="SEAL: Synergistic Co-Evolution of Agents and Learning Environments">
+  <meta name="description" content="SEAL co-evolves tool-use agents and their training-time learning interfaces with verifier-grounded failure diagnosis for more robust self-improving LLM agents.">
+  <meta name="keywords" content="SEAL, LLM agents, tool use, reinforcement learning, self-evolution, failure diagnosis, BFCL, tau2-bench">
+  <meta name="author" content="David S. Hippocampus">
+  <meta name="robots" content="index, follow">
+  <meta name="language" content="English">
+
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="SEAL Project Page">
+  <meta property="og:title" content="SEAL: Synergistic Co-Evolution of Agents and Learning Environments">
+  <meta property="og:description" content="A closed-loop co-evolution framework for interactive tool-use agents.">
+  <meta property="og:url" content="https://yihaohu0118.github.io/SEAL/">
+  <meta property="og:image" content="https://yihaohu0118.github.io/SEAL/static/images/social_preview.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt" content="SEAL project preview">
+
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="SEAL: Synergistic Co-Evolution of Agents and Learning Environments">
+  <meta name="twitter:description" content="SEAL jointly adapts tool-use agents and their training-time learning interfaces using verifier-grounded failure diagnosis.">
+  <meta name="twitter:image" content="https://yihaohu0118.github.io/SEAL/static/images/social_preview.png">
+
+  <meta name="citation_title" content="SEAL: Synergistic Co-Evolution of Agents and Learning Environments">
+  <meta name="citation_author" content="Hippocampus, David S.">
+  <meta name="citation_publication_date" content="2026">
+  <meta name="citation_pdf_url" content="https://yihaohu0118.github.io/SEAL/static/pdfs/seal-paper.pdf">
+
+  <meta name="theme-color" content="#0f766e">
+  <title>SEAL | Synergistic Co-Evolution of Agents and Learning Environments</title>
+
+  <link rel="icon" type="image/png" href="static/images/favicon.png">
+  <link rel="apple-touch-icon" href="static/images/favicon.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://cdn.jsdelivr.net">
+
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <link rel="preload" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  </noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&amp;display=swap" rel="stylesheet">
+
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ScholarlyArticle",
+    "headline": "SEAL: Synergistic Co-Evolution of Agents and Learning Environments",
+    "description": "SEAL is a closed-loop co-evolution framework for interactive tool-use agents.",
+    "author": [{
+      "@type": "Person",
+      "name": "David S. Hippocampus",
+      "affiliation": {
+        "@type": "Organization",
+        "name": "Cranberry-Lemon University"
+      }
+    }],
+    "datePublished": "2026",
+    "url": "https://yihaohu0118.github.io/SEAL/",
+    "image": "https://yihaohu0118.github.io/SEAL/static/images/social_preview.png",
+    "keywords": ["LLM agents", "tool use", "reinforcement learning", "self-evolution", "failure diagnosis"],
+    "isAccessibleForFree": true
+  }
+  </script>
+</head>
+<body>
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
+
+  <main id="main-content">
+    <section class="hero publication-header seal-hero">
+      <div class="hero-body">
+        <div class="container is-max-desktop">
+          <div class="columns is-centered">
+            <div class="column has-text-centered">
+              <p class="seal-kicker">LLM Agents | Tool Use | Self-Evolution</p>
+              <h1 class="title is-1 publication-title">SEAL: Synergistic Co-Evolution of Agents and Learning Environments</h1>
+
+              <div class="is-size-5 publication-authors">
+                <span class="author-block">
+                  <a href="#" aria-label="Author profile">David S. Hippocampus</a>
+                </span>
+              </div>
+
+              <div class="is-size-5 publication-authors">
+                <span class="author-block">Department of Computer Science, Cranberry-Lemon University</span>
+              </div>
+
+              <div class="publication-links">
+                <span class="link-block">
+                  <a href="static/pdfs/seal-paper.pdf" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-file-pdf"></i></span>
+                    <span>Paper</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="static/pdfs/seal-poster.pdf" target="_blank" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-chalkboard"></i></span>
+                    <span>Poster</span>
+                  </a>
+                </span>
+                <span class="link-block">
+                  <a href="#BibTeX" class="external-link button is-normal is-rounded is-dark">
+                    <span class="icon"><i class="fas fa-quote-right"></i></span>
+                    <span>BibTeX</span>
+                  </a>
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <figure class="seal-hero-figure">
+            <img src="static/images/seal-overview.png" alt="Conceptual comparison of self-evolution paradigms for LLM agents">
+            <figcaption>SEAL closes the loop between policy learning and environment adaptation using verifier-grounded failure diagnosis.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section hero is-light">
+      <div class="container is-max-desktop">
+        <div class="columns is-centered has-text-centered">
+          <div class="column is-four-fifths">
+            <h2 class="title is-3">Abstract</h2>
+            <div class="content has-text-justified">
+              <p>
+                Large Language Model (LLM) agents are increasingly improved through interaction rather than static supervision. Yet most self-evolution methods adapt either the policy or the learning environment in isolation, leaving a structural gap: as the agent's capability frontier shifts during training, the environment that provides supervision often remains static or only weakly coupled to the agent's revealed failures. We call this mismatch <strong>Agent-Environment Misalignment</strong>.
+              </p>
+              <p>
+                We propose <strong>SEAL</strong>, a closed-loop co-evolution framework for interactive tool-use agents. SEAL collects on-policy trajectories under executable verification, diagnoses failed rollouts into turn-level labels, and uses these diagnoses as a shared signal for both environment-side adaptation and model-side policy optimization. Across in-distribution and out-of-distribution multi-turn tool-use evaluations, SEAL consistently improves low-resource agent learning, yielding +8.25 to +26.25 average-point gains across three backbones with only 400 training samples.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Method</h2>
+        <div class="seal-two-column">
+          <div class="content">
+            <p>
+              SEAL treats the training-time environment as a learning interface: the agent still interacts with the same executable tools, rewards, task labels, and verifier, while the interface exposes more useful diagnostic signals during training.
+            </p>
+            <p>
+              Failed rollouts are converted into verifier-grounded turn-level labels, including invalid or missing tool calls, argument mismatches, recovery failures, and final-response mismatches. These diagnoses drive two coupled updates: interface evolution through schema cues and recovery feedback, and policy optimization through diagnosis-guided advantage reweighting.
+            </p>
+          </div>
+          <figure class="seal-figure">
+            <img src="static/images/seal-loop.png" alt="SEAL training-time co-evolution loop">
+            <figcaption>Training-time co-evolution loop.</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section hero is-light">
+      <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Main Results</h2>
+        <div class="seal-stat-grid">
+          <article class="seal-stat">
+            <span class="seal-stat-value">+26.25</span>
+            <span class="seal-stat-label">average-point gain on Qwen2.5-7B-Instruct</span>
+          </article>
+          <article class="seal-stat">
+            <span class="seal-stat-value">400</span>
+            <span class="seal-stat-label">training examples in the low-resource BFCL V3 setting</span>
+          </article>
+          <article class="seal-stat">
+            <span class="seal-stat-value">3</span>
+            <span class="seal-stat-label">backbones improved under the same verifier reward</span>
+          </article>
+        </div>
+
+        <div class="table-container seal-table">
+          <table class="table is-fullwidth is-hoverable">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>Average</th>
+                <th>Base</th>
+                <th>Missing Functions</th>
+                <th>Missing Parameters</th>
+                <th>Long Context</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Qwen2.5-3B-Instruct</td>
+                <td>5.75</td>
+                <td>11.00</td>
+                <td>6.00</td>
+                <td>3.00</td>
+                <td>3.00</td>
+              </tr>
+              <tr class="baseline-row">
+                <td>+ Vanilla RL</td>
+                <td>9.25</td>
+                <td>16.00</td>
+                <td>9.00</td>
+                <td>6.00</td>
+                <td>6.00</td>
+              </tr>
+              <tr class="seal-row">
+                <td>+ SEAL</td>
+                <td>14.00</td>
+                <td>19.00</td>
+                <td>15.00</td>
+                <td>12.00</td>
+                <td>10.00</td>
+              </tr>
+              <tr>
+                <td>Qwen2.5-7B-Instruct</td>
+                <td>14.00</td>
+                <td>22.00</td>
+                <td>14.00</td>
+                <td>10.00</td>
+                <td>10.00</td>
+              </tr>
+              <tr class="baseline-row">
+                <td>+ Vanilla RL</td>
+                <td>30.75</td>
+                <td>46.00</td>
+                <td>27.00</td>
+                <td>27.00</td>
+                <td>23.00</td>
+              </tr>
+              <tr class="seal-row">
+                <td>+ SEAL</td>
+                <td>40.25</td>
+                <td>58.00</td>
+                <td>36.00</td>
+                <td>34.00</td>
+                <td>33.00</td>
+              </tr>
+              <tr>
+                <td>ToolACE-2-Llama-3.1-8B</td>
+                <td>32.00</td>
+                <td>45.00</td>
+                <td>26.00</td>
+                <td>35.00</td>
+                <td>22.00</td>
+              </tr>
+              <tr class="baseline-row">
+                <td>+ Vanilla RL</td>
+                <td>38.50</td>
+                <td>52.00</td>
+                <td>30.00</td>
+                <td>40.00</td>
+                <td>32.00</td>
+              </tr>
+              <tr class="seal-row">
+                <td>+ SEAL</td>
+                <td>46.75</td>
+                <td>58.00</td>
+                <td>46.00</td>
+                <td>44.00</td>
+                <td>39.00</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Out-of-Distribution Transfer</h2>
+        <div class="content has-text-justified">
+          <p>
+            Models trained only on the 400-sample BFCL V3 split transfer to held-out tool-use settings with different schemas, domains, and interaction patterns. SEAL improves both evaluated Qwen backbones on aggregate BFCL V4 and tau2-bench metrics, indicating that diagnosis-guided learning targets reusable tool-use behaviors rather than only memorizing the training distribution.
+          </p>
+        </div>
+        <div class="table-container seal-table compact-table">
+          <table class="table is-fullwidth is-hoverable">
+            <thead>
+              <tr>
+                <th>Model</th>
+                <th>BFCL V4 Avg.</th>
+                <th>Web Search</th>
+                <th>Memory</th>
+                <th>tau2-bench Avg.</th>
+                <th>Retail</th>
+                <th>Airline</th>
+                <th>Telecom</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Qwen2.5-3B-Instruct</td>
+                <td>4.69</td>
+                <td>0.00</td>
+                <td>9.38</td>
+                <td>9.64</td>
+                <td>5.26</td>
+                <td>14.00</td>
+                <td>9.65</td>
+              </tr>
+              <tr class="baseline-row">
+                <td>+ Vanilla RL</td>
+                <td>5.98</td>
+                <td>0.50</td>
+                <td>11.26</td>
+                <td>10.60</td>
+                <td>6.14</td>
+                <td>16.00</td>
+                <td>9.65</td>
+              </tr>
+              <tr class="seal-row">
+                <td>+ SEAL</td>
+                <td>8.63</td>
+                <td>2.00</td>
+                <td>15.26</td>
+                <td>11.76</td>
+                <td>8.77</td>
+                <td>16.00</td>
+                <td>10.52</td>
+              </tr>
+              <tr>
+                <td>Qwen2.5-7B-Instruct</td>
+                <td>9.17</td>
+                <td>6.50</td>
+                <td>11.83</td>
+                <td>16.11</td>
+                <td>16.67</td>
+                <td>20.00</td>
+                <td>11.67</td>
+              </tr>
+              <tr class="baseline-row">
+                <td>+ Vanilla RL</td>
+                <td>10.26</td>
+                <td>7.50</td>
+                <td>13.02</td>
+                <td>17.19</td>
+                <td>19.30</td>
+                <td>20.00</td>
+                <td>12.28</td>
+              </tr>
+              <tr class="seal-row">
+                <td>+ SEAL</td>
+                <td>12.71</td>
+                <td>9.50</td>
+                <td>15.92</td>
+                <td>20.79</td>
+                <td>26.32</td>
+                <td>22.00</td>
+                <td>14.04</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <section class="section hero is-light">
+      <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Ablation</h2>
+        <figure class="seal-wide-figure">
+          <img src="static/images/seal-ablation.png" alt="SEAL ablation and reward analysis">
+          <figcaption>Diagnosis-guided training allocates more optimization pressure to attributable and recoverable failures.</figcaption>
+        </figure>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container is-max-desktop">
+        <h2 class="title is-3 has-text-centered">Poster</h2>
+        <iframe class="seal-poster" src="static/pdfs/seal-poster.pdf" title="SEAL poster"></iframe>
+      </div>
+    </section>
+
+    <section class="section" id="BibTeX">
+      <div class="container is-max-desktop content">
+        <div class="bibtex-header">
+          <h2 class="title">BibTeX</h2>
+          <button class="copy-bibtex-btn" onclick="copyBibTeX()" title="Copy BibTeX to clipboard">
+            <i class="fas fa-copy"></i>
+            <span class="copy-text">Copy</span>
+          </button>
+        </div>
+        <pre id="bibtex-code"><code>@article{hippocampus2026seal,
+  title={SEAL: Synergistic Co-Evolution of Agents and Learning Environments},
+  author={Hippocampus, David S.},
+  journal={Preprint},
+  year={2026},
+  url={https://yihaohu0118.github.io/SEAL/}
+}</code></pre>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content has-text-centered">
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>, adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+</body>
+</html>
