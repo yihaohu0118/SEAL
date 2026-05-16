@@ -151,12 +151,29 @@ a:hover {
   font-weight: 700;
 }
 
+.publication-authors .author-name {
+  display: inline-block;
+  margin-right: 0.28rem;
+  color: var(--ink);
+}
+
+.publication-authors sup {
+  color: var(--coral);
+  font-size: 0.68em;
+  font-weight: 800;
+  margin-left: 0.05rem;
+}
+
 .publication-authors .affiliation {
   display: block;
   margin-top: 0.2rem;
   color: var(--subtle);
   font-size: 0.96rem;
   font-weight: 600;
+}
+
+.publication-authors .affiliation a {
+  font-weight: 700;
 }
 
 .hero-summary {
