@@ -1,0 +1,256 @@
+# Paper Table: w/o Diagnosis-Guided Reweighting.
+#
+# Keeps train-only required/enum observation annotations and verifier
+# diagnostics, but disables A-Patch advantage reweighting.
+
+hydra:
+  searchpath:
+    - file://external/config_fallback
+    - file://config
+
+defaults:
+  - ppo_trainer
+  - agentevolver
+  - _self_
+
+data:
+  train_files: data/bfcl_train.parquet
+  val_files: data/bfcl_eval_400.parquet
+  train_batch_size: 32
+  max_prompt_length: 8192
+  max_response_length: 4096
+  return_raw_chat: true
+  filter_overlong_prompts: false
+  truncation: error
+  val_batch_size: 400
+  val_type: val
+
+algorithm:
+  gamma: 1.0
+  lam: 1.0
+  adv_estimator: grpo
+  use_kl_in_reward: false
+  kl_penalty: kl
+  kl_ctrl:
+    type: fixed
+    kl_coef: 0.0
+
+actor_rollout_ref:
+  hybrid_engine: true
+  model:
+    path: Qwen/Qwen2.5-7B-Instruct
+    use_remove_padding: true
+    enable_gradient_checkpointing: true
+  rollout:
+    name: vllm
+    mode: async
+    temperature: 1.0
+    n: 8
+    prompt_length: ${data.max_prompt_length}
+    response_length: ${data.max_response_length}
+    max_model_len: 16384
+    gpu_memory_utilization: 0.4
+    tensor_model_parallel_size: 1
+    log_prob_micro_batch_size_per_gpu: 1
+    log_prob_max_token_len_per_gpu: 16384
+    val_kwargs:
+      n: 1
+      temperature: 0
+    multi_turn:
+      enable: true
+      format: llama3_json
+      max_steps: 20
+      completion_callback: agentevolver.module.trainer.simple_completion_callback.SimpleCompletionCallback
+      tool_config_path: ""
+    max_env_worker: 32
+    sparse: true
+  actor:
+    optim:
+      lr: 1e-6
+    use_kl_loss: true
+    kl_loss_coef: 0.001
+    kl_loss_type: low_var_kl
+    clip_ratio: 0.2
+    clip_ratio_low: 0.2
+    clip_ratio_high: 0.2
+    off_cliprange_high: 1.0
+    clip_ratio_c: 10.0
+    grad_clip: 1.0
+    entropy_coeff: 0
+    ppo_micro_batch_size_per_gpu: 1
+    ppo_mini_batch_size: 8
+    ppo_max_token_len_per_gpu: 16384
+    loss_agg_mode: token-mean
+    fsdp_config:
+      param_offload: false
+      optimizer_offload: false
+  ref:
+    log_prob_micro_batch_size_per_gpu: 1
+    log_prob_max_token_len_per_gpu: 16384
+    fsdp_config:
+      param_offload: true
+
+critic:
+  grad_clip: 1.0
+  cliprange_value: 0.5
+  ppo_max_token_len_per_gpu: 16384
+  forward_max_token_len_per_gpu: 16384
+
+env_service:
+  env_type: bfcl
+  env_url: http://127.0.0.1:8082
+  env_feedin_preference: code
+  bfcl:
+    strict_tool_parser: true
+    enforce_available_tools: true
+    tool_prompt_mode: bfcl_qwen_fc
+    tool_result_mode: bfcl_tool_response
+    observation_lite:
+      enable: true
+      apply_to_validation: false
+      add_required_hint: true
+      add_type_hint: false
+      add_enum_hint: true
+      hide_optional: false
+
+trainer:
+  n_gpus_per_node: 4
+  nnodes: 1
+  critic_warmup: 0
+  logger:
+    - console
+  project_name: bfcl_seal_ablation
+  experiment_name: bfcl_seal_02_wo_diagnosis_guided_reweighting
+  save_freq: 0
+  save_best_checkpoint: true
+  keep_only_best_checkpoint: true
+  save_limit: 0
+  test_freq: 10
+  total_epochs: 6
+  val_before_train: true
+  val_only: false
+
+task_manager:
+  n: 0
+  train_data_path: tasks_explored.train.json
+  val_data_path: tasks_explored.val.json
+  llm_client: qwen-plus
+  env_profile: cookbook/env_profiles/bfcl.json
+  bs: ${data.train_batch_size}
+  num_explore_threads: ${thread_pool.max_workers}
+  mixture:
+    use_original_tasks: true
+    synthetic_data_ratio: 0.0
+    shuffle: true
+  grader:
+    original_grader: bfcl-dense-env
+    synthetic_grader: llm-binary-gt-no_constraint
+  strategy: random
+  strategy_args:
+    max_explore_step: 30
+    max_llm_retries: 6
+    env_url: ${env_service.env_url}
+    exploration_llm_temperature: 1.0
+    exploration_llm_top_p: 1.0
+    exploration_llm_top_k: 100
+
+exp_manager:
+  val_rollout_mode: woexp
+  train_rollout_mode: woexp
+  rollout_ratio: 0.0
+  train_sample_mode: alldiscard
+  train_sample_keepratio: 1.0
+  experience_template: "\n\nSome Related Experience to help you to complete the task:<EXP>{}</EXP>\n\n"
+  init_exp_before_training: false
+  init_exp_only: false
+  summary_batch_size: 8
+  reme:
+    base_url: http://127.0.0.1:8001
+    workspace_id: default
+    enable_summarizer: false
+    enable_context_generator: false
+    retrieve_top_k: 3
+    updated_freq: 0
+
+attribution_driven_credit_assignment:
+  enable: false
+
+tocf:
+  enable: true
+  persistence_dir: experiments/bfcl_seal_ablation/02_wo_diagnosis_guided_reweighting/tocf_state
+  state:
+    dir: experiments/bfcl_seal_ablation/02_wo_diagnosis_guided_reweighting/tocf_state
+  stats:
+    enable: true
+    dump_dir: experiments/bfcl_seal_ablation/02_wo_diagnosis_guided_reweighting/tocf_stats
+  task_distribution:
+    enable: false
+    category_weights:
+      multi_turn_base: 1.0
+      multi_turn_miss_param: 1.0
+      multi_turn_miss_func: 1.0
+      multi_turn_long_context: 1.0
+    target_size: null
+    objective: learning_progress
+    failure_aware: true
+    tag_alpha: 0.5
+    task_alpha: 0.5
+    prior_strength: 4.0
+    prior_mean: 0.5
+    ema_beta: 0.5
+    stratified: true
+    stable_seed: true
+    replacement: false
+    alpha: 0.75
+    min_weight: 0.5
+    max_weight: 2.0
+    min_samples: 4
+    complexity_lambda: 0.0
+    accept_threshold: -1.0
+  query_suffix:
+    enable: false
+    apply_to_validation: false
+  feedback:
+    dense_reward:
+      enable: true
+      mode: capped
+      partial_credit_cap: 0.0
+      partial_credit_weight: 1.0
+      cap_decay: false
+      min_cap: 0.0
+  advantage:
+    apatch:
+      enable: false
+      min_scale: 0.5
+      max_scale: 2.0
+      apply_to: all
+      metric_prefix: tocf/apatch
+      warmup_steps: 0
+      dynamic:
+        enable: true
+        ema_beta: 0.25
+        prevalence_alpha: 1.0
+        confidence_samples: 32
+      tag_weights:
+        spurious_tool_call: 2.0
+        correct_abstention: 1.8
+        empty_turn_model_response: 1.5
+        state_mismatch: 1.0
+        response_mismatch: 0.9
+        instance_mismatch: 0.6
+        pass: 1.0
+  self_evolution:
+    enable: false
+    max_per_category: 5
+    inject_prob: 0.5
+    critique_prob: 0.5
+    apply_to_validation: false
+  strategy:
+    enable: false
+    inject_prob: 0.7
+    apply_to_validation: false
+    prior_alpha: 1.0
+    prior_beta: 1.0
+    hierarchical_prior_weight: 0.5
+    template: "\n\n[Strategy] {text}\n"
+
