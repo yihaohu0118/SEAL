@@ -1,7 +1,10 @@
-# Paper Table: w/o Environment-Side Adaptation.
+# w/o Environment-Side Adaptation: full expanded config aligned with
+# examples/bfcl_grpo_apatch_rerun.yaml, but writing to its own ablation run.
 #
-# Keeps verifier-grounded diagnosis and A-Patch advantage reweighting, but
-# leaves the BFCL observation/tool schema unchanged.
+# This file intentionally avoids inheriting bfcl_tocf_taes_shared so the rerun
+# is self-contained, while preserving the exact A-Patch-only mechanism:
+# sparse verifier reward, diagnostic-only BFCL tags, and A-Patch advantage
+# reweighting.
 
 hydra:
   searchpath:
@@ -253,4 +256,3 @@ tocf:
     prior_beta: 1.0
     hierarchical_prior_weight: 0.5
     template: "\n\n[Strategy] {text}\n"
-
