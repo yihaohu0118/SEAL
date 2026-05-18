@@ -8,7 +8,7 @@ class Task(BaseModel):
     """
     task_id: str = Field(default=...)
 
-    env_type: str = Field(default="appworld")
+    env_type: str = Field(default="bfcl")
     
     # whether this task is open query. open query has no clear stop condition.
     open_query: bool = Field() # FIXME debug, check if every instance handles this new attr. default False.

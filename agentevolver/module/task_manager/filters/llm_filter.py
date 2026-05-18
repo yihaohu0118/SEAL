@@ -154,7 +154,6 @@ class LlmFilter(TaskPostFilter):
                 tokenizer=self._tokenizer
             )
             agent_flow = ModifiedAgentFlow(
-                enable_context_generator=False,
                 llm_chat_fn=self._get_llm_chat_fn(),
                 tokenizer=self._tokenizer,
                 config=self._config,

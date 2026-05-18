@@ -85,8 +85,8 @@ critic:
 
 
 env_service:
-  env_type: "appworld"
-  env_url: "http://127.0.0.1:8080"
+  env_type: "bfcl"
+  env_url: "http://127.0.0.1:8082"
   env_feedin_preference: code # code, text, box
   bfcl:
     # BFCL-only diagnostic switches. Defaults favor paper-safe evaluation.
@@ -103,8 +103,8 @@ trainer:
   nnodes: 1
   critic_warmup: 0
   logger: ["console"]
-  project_name: "appworld_qwen25-7b"
-  experiment_name: "appworld_qwen25-7b_baseline"
+  project_name: "bfcl_seal"
+  experiment_name: "bfcl_seal_default"
   save_freq: 10000
   save_best_checkpoint: false
   best_checkpoint_metric: null
@@ -139,7 +139,7 @@ task_manager:
   # 0 - stop exploration
   n: 0
   # env profiles used in exploration. If you set n to 0, just ignore this.
-  env_profile: cookbook/env_profiles/appworld.json
+  env_profile: cookbook/env_profiles/bfcl.json
   # batch size of dynamic synthetic data
   # this should be the same as train_batch_size
   bs: ${data.train_batch_size}
@@ -160,7 +160,7 @@ task_manager:
     # grader used for original tasks
     original_grader: env
     # grader used for synthetic data
-    synthetic_grader: llm-binary-gt-no_constraint
+    synthetic_grader: env
     
   # strategy settings
   strategy: random
@@ -176,106 +176,12 @@ task_manager:
     exploration_llm_top_p: 1.0
     exploration_llm_top_k: 100
 
-exp_manager:
-  # rollout mode on dev/test set: ["mixed", "all", "woexp"]
-  val_rollout_mode: "woexp"
-  # rollout mode on train set: ["mixed", "all", "woexp"]
-  train_rollout_mode: "woexp"
-  # ratio of adding experience within group during rollout
-  rollout_ratio: 0.0
-  # sample mode after train rollout: ["allkeep", "alldiscard", "hybrid"]
-  train_sample_mode: "alldiscard"
-  # task-level ratio for keeping experience
-  train_sample_keepratio: 1.0
-  # template for inserting experience
-  experience_template: "\n\nSome Related Experience to help you to complete the task:<EXP>{}</EXP>\n\n"
-  # whether to init experience pool before training
-  init_exp_before_training: false
-  # whether to only init experience pool
-  init_exp_only: false
-  # batch size for experience summarization
-  summary_batch_size: 8
-  reme:
-    # base URL for ReMe service
-    base_url: "http://127.0.0.1:8001"
-    workspace_id: "default"
-    enable_summarizer: false
-    enable_context_generator: false
-    retrieve_top_k: 3
-    updated_freq: 0
-
-     
-
-attribution_driven_credit_assignment:
-  # main switch
-  enable: false
-  # evaluation type ("local" or "api")
-  evaluation_type: "api"
-  # consistent step scaling factor
-  consistent_scale: 1.0
-  # inconsistent step scaling factor
-  pos_unconsistent_scale: 0.2
-  # inconsistent step negative scaling factor
-  neg_unconsistent_scale: -0.2
-  # concurrent processing count
-  concurrent: 5
-  # model used for semantic evaluation
-  model: "qwen-max"
-  # maximum API call retries, default 200 times
-  api_max_retries: 200
-  # set to specific path to enable, for example: "/path/to/llm_evaluation_logs"
-  llm_evaluation_log_dir: null
-  adca_grpo:
-    # allocation | decouple
-    prm_scheme: "decouple"
-    # must be true to ensure signal scale consistency and training stability
-    do_batch_norm: true
-    # generally recommended to be true to ensure equal contribution from each trajectory
-    equal_trajectory_weight: true
-
-    # base value for GOOD/BAD labels under the "decouple" scheme
-    fix_base: 0.2
-    # true or false (after closing, use constant alpha)
-    alpha_cosine_decay_enable: false
-    # key hyperparameter to tune; start with a small value (e.g., 0.05 ~ 0.2)
-    alpha: 0.1
-    # pure cosine lower limit
-    alpha_min: 0.0
-    # total training steps (used for p = global_steps/total_steps)
-    total_steps: 100
-    # recommended to be "last_step" as it is more intuitive
-    orm_distribution: last_step
-    # default is false; can be enabled for tasks with high variance in trajectory length
-    enable_length_normalization: false
-    # balance effectiveness and API cost; enables attribution for the first 100 epochs
-    prm_steps: 100
-    # "none" | "skip_small_adv" | "skip_all_neg"
-    # recommended to save API costs by not evaluating low-value trajectories
-    skip_type: "none"
-    # recommended to be true to monitor the attribution module's internal state
-    enable_adca_metric: false
-
 tocf:
   # Main switch for Task distribution / Observation / Constraint / Feedback patches.
   enable: false
   stats:
     enable: true
     dump_dir: null
-  task_distribution:
-    enable: false
-    category_weights: {}
-    target_size: null
-    replacement: true
-    alpha: 1.0
-    min_weight: 0.2
-    max_weight: 3.0
-    min_samples: 8
-    complexity_lambda: 0.0
-    accept_threshold: -1.0
-  query_suffix:
-    enable: false
-    suffix: "Before calling a function, verify required parameters and preconditions."
-    apply_to_validation: false
   feedback:
     dense_reward:
       enable: false

@@ -145,7 +145,7 @@ task_manager:
     shuffle: true
   grader:
     original_grader: env
-    synthetic_grader: llm-binary-gt-no_constraint
+    synthetic_grader: env
   strategy: random
   strategy_args:
     max_explore_step: 30
@@ -155,43 +155,13 @@ task_manager:
     exploration_llm_top_p: 1.0
     exploration_llm_top_k: 100
 
-exp_manager:
-  val_rollout_mode: woexp
-  train_rollout_mode: woexp
-  rollout_ratio: 0.0
-  train_sample_mode: alldiscard
-  train_sample_keepratio: 1.0
-  experience_template: "\n\nSome Related Experience to help you to complete the task:<EXP>{}</EXP>\n\n"
-  init_exp_before_training: false
-  init_exp_only: false
-  summary_batch_size: 8
-  reme:
-    base_url: http://127.0.0.1:8001
-    workspace_id: default
-    enable_summarizer: false
-    enable_context_generator: false
-    retrieve_top_k: 3
-    updated_freq: 0
-
-attribution_driven_credit_assignment:
-  enable: false
-
 tocf:
   enable: false
   stats:
     enable: false
-  task_distribution:
-    enable: false
-  query_suffix:
-    enable: false
   feedback:
     dense_reward:
       enable: false
-  self_evolution:
-    enable: false
   advantage:
     apatch:
       enable: false
-  strategy:
-    enable: false
-

@@ -1,8 +1,0 @@
-hydra:
-  searchpath:
-    - file://external/config_fallback
-    - file://config
-
-defaults:
-  - bfcl_grpo_base
-  - _self_

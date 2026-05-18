@@ -136,7 +136,7 @@ class ServiceRequest(BaseModel):
     Service request class .
     """
 
-    env_type: Optional[str] = "appworld"
+    env_type: Optional[str] = "bfcl"
     task_id: Optional[str] = None
     instance_id: Optional[str] = None
     messages: Dict[str, Any] = {}
@@ -347,11 +347,7 @@ class EnvService:
                 f"instance_id: {instance_id}",
             )
 
-            if env_type == "webshop":
-                params["server"] = SIM_SERVER
-                env_actor = env_remote_cls.remote(task_id, instance_id, params)
-            else:
-                env_actor = env_remote_cls.remote(task_id, instance_id, params)
+            env_actor = env_remote_cls.remote(task_id, instance_id, params)
 
             self.env_actors[instance_id] = env_actor
             init_state = await env_actor.get_init_state.remote(params)
@@ -496,7 +492,6 @@ async def cleanup_loop():
 
 app = FastAPI(lifespan=lifespan)
 env_service = EnvService()
-SIM_SERVER = None
 
 
 @app.get(
@@ -744,7 +739,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--env",
         type=str,
-        default="appworld",
+        default="bfcl",
         help="Environment to use",
     )
     parser.add_argument(

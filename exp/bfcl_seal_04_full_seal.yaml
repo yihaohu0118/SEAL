@@ -144,7 +144,7 @@ task_manager:
     shuffle: true
   grader:
     original_grader: bfcl-dense-env
-    synthetic_grader: llm-binary-gt-no_constraint
+    synthetic_grader: env
   strategy: random
   strategy_args:
     max_explore_step: 30
@@ -154,27 +154,6 @@ task_manager:
     exploration_llm_top_p: 1.0
     exploration_llm_top_k: 100
 
-exp_manager:
-  val_rollout_mode: woexp
-  train_rollout_mode: woexp
-  rollout_ratio: 0.0
-  train_sample_mode: alldiscard
-  train_sample_keepratio: 1.0
-  experience_template: "\n\nSome Related Experience to help you to complete the task:<EXP>{}</EXP>\n\n"
-  init_exp_before_training: false
-  init_exp_only: false
-  summary_batch_size: 8
-  reme:
-    base_url: http://127.0.0.1:8001
-    workspace_id: default
-    enable_summarizer: false
-    enable_context_generator: false
-    retrieve_top_k: 3
-    updated_freq: 0
-
-attribution_driven_credit_assignment:
-  enable: false
-
 tocf:
   enable: true
   persistence_dir: experiments/bfcl_seal_ablation/04_full_seal/tocf_state
@@ -183,33 +162,6 @@ tocf:
   stats:
     enable: true
     dump_dir: experiments/bfcl_seal_ablation/04_full_seal/tocf_stats
-  task_distribution:
-    enable: false
-    category_weights:
-      multi_turn_base: 1.0
-      multi_turn_miss_param: 1.0
-      multi_turn_miss_func: 1.0
-      multi_turn_long_context: 1.0
-    target_size: null
-    objective: learning_progress
-    failure_aware: true
-    tag_alpha: 0.5
-    task_alpha: 0.5
-    prior_strength: 4.0
-    prior_mean: 0.5
-    ema_beta: 0.5
-    stratified: true
-    stable_seed: true
-    replacement: false
-    alpha: 0.75
-    min_weight: 0.5
-    max_weight: 2.0
-    min_samples: 4
-    complexity_lambda: 0.0
-    accept_threshold: -1.0
-  query_suffix:
-    enable: false
-    apply_to_validation: false
   feedback:
     dense_reward:
       enable: true
@@ -239,18 +191,3 @@ tocf:
         response_mismatch: 0.9
         instance_mismatch: 0.6
         pass: 1.0
-  self_evolution:
-    enable: false
-    max_per_category: 5
-    inject_prob: 0.5
-    critique_prob: 0.5
-    apply_to_validation: false
-  strategy:
-    enable: false
-    inject_prob: 0.7
-    apply_to_validation: false
-    prior_alpha: 1.0
-    prior_beta: 1.0
-    hierarchical_prior_weight: 0.5
-    template: "\n\n[Strategy] {text}\n"
-

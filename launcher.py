@@ -55,16 +55,6 @@ def parse_args():
         required=False,
         help='Path to configuration file'
     )
-    parser.add_argument('--with-appworld',
-        action='store_true',  # Changed from store_true to action='store_true'
-        default=False,
-        help='Launch appworld'
-    )
-    parser.add_argument('--with-webshop',
-        action='store_true',  # Changed from store_true to action='store_true'
-        default=False,
-        help='Launch webshop'
-    )
     parser.add_argument('--with-bfcl',
         action='store_true',
         default=False,
@@ -79,11 +69,6 @@ def parse_args():
         action='store_true',  # Changed from store_true to action='store_true'
         default=False,
         help='Launch logview'
-    )
-    parser.add_argument('--with-crafters',
-        action='store_true',  # Changed from store_true to action='store_true'
-        default=False,
-        help='Launch Crafters Env Simulation'
     )
     parser.add_argument('--reboot',
         action='store_true',  # Changed from store_true to action='store_true'
@@ -105,7 +90,6 @@ def parse_args():
 
 def _service_endpoint(service_name: str):
     defaults = {
-        "appworld": ("127.0.0.1", 8080),
         "bfcl": (os.environ.get("BFCL_HOST", "127.0.0.1"), int(os.environ.get("BFCL_PORT", "8082"))),
         "reme": ("127.0.0.1", 8001),
     }
@@ -132,9 +116,9 @@ def pty_launch(service_name: str, success_std_string="Starting server on", force
     service_name_upper = service_name.upper()
     service_path = os.environ.get(f'{service_name_upper}_PATH')
     service_script = os.environ.get(f'{service_name_upper}_SCRIPT')
-    if not service_path and service_name in {"appworld", "bfcl"}:
+    if not service_path and service_name == "bfcl":
         service_path = "./env_service/launch_script"
-    if not service_script and service_name in {"appworld", "bfcl"}:
+    if not service_script and service_name == "bfcl":
         service_script = f"bash {service_name}.sh"
     if not service_path or not service_script:
         raise ValueError(
@@ -145,7 +129,7 @@ def pty_launch(service_name: str, success_std_string="Starting server on", force
     companion = LaunchCommandWhenAbsent(
         full_argument_list=[service_script],
         dir=service_path,
-        tag="appworld_env_service",
+        tag=f"{service_name}_service",
         use_pty=True
     )
     companion.launch(
@@ -368,18 +352,6 @@ def main():
     if args.with_reme:
         # test done
         pty_launch("reme", success_std_string="Uvicorn running on", force_restart=args.reboot)
-
-    if args.with_appworld:
-        # test done
-        pty_launch("appworld", force_restart=args.reboot)
-
-    if args.with_crafters:
-        # test done
-        pty_launch("crafters")
-
-    if args.with_webshop:
-        # not tested
-        pty_launch("webshop")
 
     if args.with_bfcl:
         pty_launch("bfcl", force_restart=args.reboot)

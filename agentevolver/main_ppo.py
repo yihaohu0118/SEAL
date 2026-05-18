@@ -22,9 +22,8 @@ from agentevolver.module.task_manager.base import NaiveTaskObjectiveRetrieval
 from agentevolver.module.task_manager.data_mixture import OriginalOnlyStrategy, UnifiedMixtureStrategy
 from agentevolver.module.task_manager.strategies.random import LlmRandomSamplingExploreStrategy
 from agentevolver.module.task_manager.task_manager import TaskManager
-from agentevolver.module.tocf.sampler import AdaptiveMixtureStrategy
 
-# non_console_mods = ["appworld_io"]
+# non_console_mods = []
 # register_logger(non_console_mods=non_console_mods, auto_clean_mods=[], base_log_path="logs/agentevolver", debug=True)
 
 import os
@@ -370,7 +369,6 @@ class TaskRunner:
         # init task manager
         llm_client = _make_task_manager_llm_client(config)
         tocf_cfg = config.get("tocf", {})
-        tocf_task_distribution_cfg = tocf_cfg.get("task_distribution", {}) if tocf_cfg else {}
         tocf_feedback_cfg = tocf_cfg.get("feedback", {}) if tocf_cfg else {}
         tocf_dense_reward_cfg = tocf_feedback_cfg.get("dense_reward", {}) if tocf_feedback_cfg else {}
         if (
@@ -380,28 +378,12 @@ class TaskRunner:
         ):
             config.task_manager.grader.original_grader = "bfcl-dense-env"
             print("TOCF dense reward is enabled; using task_manager.grader.original_grader=bfcl-dense-env")
-        if tocf_cfg.get("enable", False) and tocf_task_distribution_cfg.get("enable", False):
-            raw_category_weights = tocf_task_distribution_cfg.get("category_weights", {})
-            if hasattr(raw_category_weights, "_metadata"):
-                raw_category_weights = OmegaConf.to_container(raw_category_weights, resolve=True)
-            train_mixture_strategy = AdaptiveMixtureStrategy(
-                use_original=config.task_manager.mixture.use_original_tasks,
-                synthetic_ratio=config.task_manager.mixture.synthetic_data_ratio,
-                category_weights=dict(raw_category_weights or {}),
-                shuffle=config.task_manager.mixture.shuffle,
-                seed=42,
-                target_size=tocf_task_distribution_cfg.get("target_size", None),
-                replacement=tocf_task_distribution_cfg.get("replacement", True),
-                stratified=tocf_task_distribution_cfg.get("stratified", False),
-                stable_seed=tocf_task_distribution_cfg.get("stable_seed", False),
-            )
-        else:
-            train_mixture_strategy = UnifiedMixtureStrategy(
-                use_original=config.task_manager.mixture.use_original_tasks,
-                synthetic_ratio=config.task_manager.mixture.synthetic_data_ratio,
-                shuffle=config.task_manager.mixture.shuffle,
-                seed=42,
-            )
+        train_mixture_strategy = UnifiedMixtureStrategy(
+            use_original=config.task_manager.mixture.use_original_tasks,
+            synthetic_ratio=config.task_manager.mixture.synthetic_data_ratio,
+            shuffle=config.task_manager.mixture.shuffle,
+            seed=42,
+        )
         train_task_manager=TaskManager(
             config=config,
             exploration_strategy=config.task_manager.strategy,

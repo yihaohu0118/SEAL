@@ -8,13 +8,10 @@ from agentevolver.client.env_client import EnvClient
 from agentevolver.module.agent_flow.base_agent_flow import BaseAgentFlow
 from agentevolver.schema.task import Task
 from agentevolver.schema.trajectory import Trajectory
-from agentevolver.module.context_manager.cmt_linear import Linear_CMT, ExtendedMessage
-from agentevolver.module.context_manager.cmt_linear_think import LinearThinkCMT
-from agentevolver.module.context_manager.cmt_context_clip import SelfContextClipCMT
+from agentevolver.module.context_manager.cmt_linear import Linear_CMT
 from agentevolver.module.exp_manager.exp_manager import TrajExpConfig
 from typing import List, Dict, Any, Optional
 from agentevolver.module.tocf.category import infer_task_category
-from agentevolver.module.tocf.patch import apply_query_suffix
 
 
 class EnvWorker(object):
@@ -82,9 +79,6 @@ class EnvWorker(object):
             else:
                 self.task.query = init_messages[-1]["content"]
 
-            if apply_query_suffix(self.task, config=self.config, mode=traj_exp_config.mode):
-                init_messages[-1]["content"] = self.task.query
-
             # insert custom system prompt
             if system_prompt is not None:
                 # FIXME quick fix for test
@@ -93,14 +87,11 @@ class EnvWorker(object):
                 init_messages.insert(1, {"role": "user", "content": system_prompt})
                 init_messages.pop() # remove the last original query
 
-            if self.config.actor_rollout_ref.rollout.context_template == "linear":
-                traj_cmt: Linear_CMT = Linear_CMT(self.config, self.tokenizer)
-            elif self.config.actor_rollout_ref.rollout.context_template == "linear_think":
-                traj_cmt: LinearThinkCMT = LinearThinkCMT(self.config, self.tokenizer)
-            elif self.config.actor_rollout_ref.rollout.context_template == "context_selfclip":
-                traj_cmt: SelfContextClipCMT = SelfContextClipCMT(self.config, self.tokenizer, self.llm_chat_fn)
-            else:
-                raise ValueError(f"Unsupported context template: {self.config.actor_rollout_ref.rollout.context_template}")
+            if self.config.actor_rollout_ref.rollout.context_template != "linear":
+                raise ValueError(
+                    "The BFCL SEAL release supports only context_template='linear'."
+                )
+            traj_cmt: Linear_CMT = Linear_CMT(self.config, self.tokenizer)
 
             traj_cmt.data_id = data_id
             traj_cmt.rollout_id = rollout_id

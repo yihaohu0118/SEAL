@@ -27,8 +27,7 @@ from agentevolver.module.task_manager.rewards import grader_manager
 from agentevolver.schema.task import Task
 from agentevolver.schema.trajectory import Trajectory, Sample
 from agentevolver.utils.step_parser import parse_response_ids_to_steps
-# do not delete this line
-from agentevolver.module.task_manager.rewards import LlmAsJudgeRewardCalculator,LlmAsJudgeRewardCalculatorWithGT,LlmAsJudgeBinaryRewardCalculator,LlmAsJudgeBinaryRewardCalculatorWithGT,EnvGrader, AvgBinaryGTJudge, AvgLlmJudge
+from agentevolver.module.task_manager.rewards import BfclDenseEnvGrader, EnvGrader
 from beast_logger import register_logger
 from agentevolver.module.exp_manager.exp_manager import TaskExpConfig, TrajExpConfig
 
@@ -81,7 +80,6 @@ class ParallelEnvManager(object):
         self.pad_token_id = self.tokenizer.pad_token_id
         self.rollout_config = config.actor_rollout_ref.rollout
 
-        # self.experience_template = config.hybrid_experience_training.experience_template
         self.llm_mode = "local" # use fsdp worker ("local") or use foreign server ("remote")
         self.current_token = 0
         self.current_token_count_time = time.time()

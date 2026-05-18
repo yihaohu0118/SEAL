@@ -214,7 +214,7 @@ def main():
     """
     client = EnvClient()
 
-    env_type = "appworld"
+    env_type = "bfcl"
     # get the task list
     task_ids = client.get_env_profile(env_type)  # ⭐ Retrieve the list of available tasks for the specified environment type
     print(f"Available tasks: {task_ids}")
@@ -228,7 +228,7 @@ def main():
     print(f"Created instance {instance_id} with query: {query}")
 
     # act
-    action = {"role": "assistant", "content": "print('hello appworld!!')"}
+    action = {"role": "assistant", "content": "I need to inspect the available tools first."}
     result = client.step(instance_id, action)  # ⭐ Execute an action within the created instance
     print(f"Step result: {result}")
 

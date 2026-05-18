@@ -17,7 +17,7 @@ from agentevolver.module.task_manager.strategies.common.prompts.prompt_summarize
     parse_tasks_from_response,
 )
 from agentevolver.module.task_manager.strategies import TaskExploreStrategy
-from agentevolver.module.task_manager.prelude_profiles import bfcl, appworld
+from agentevolver.module.task_manager.prelude_profiles import bfcl
 from agentevolver.schema.task import Task, TaskObjective
 from agentevolver.schema.trajectory import Trajectory
 
@@ -63,7 +63,6 @@ class LlmRandomSamplingExploreStrategy(TaskExploreStrategy):
             }
         )
         agent_flow: BaseAgentFlow = ModifiedAgentFlow(
-            enable_context_generator=False,
             llm_chat_fn=llm_chat_fn,
             tokenizer=self._tokenizer,
             config=self._config,

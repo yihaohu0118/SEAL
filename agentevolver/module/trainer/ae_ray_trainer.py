@@ -56,7 +56,6 @@ from verl.utils.dataset.rl_dataset import RLHFDataset
 from verl.utils.metric import reduce_metrics
 
 from agentevolver.client.llm_client import DashScopeClient
-from agentevolver.client.em_client import EMClient
 from agentevolver.module.env_manager.env_manager import ParallelEnvManager
 from agentevolver.module.task_manager import adapter as task_adapter
 from agentevolver.module.task_manager import TaskManager,NaiveTaskObjectiveRetrieval
@@ -65,11 +64,8 @@ from agentevolver.schema.trajectory import Trajectory
 
 from agentevolver.utils.tracking import ValidationGenerationsLogger
 
-from agentevolver.module.adv_processor.adca_grpo_pipeline import apply_adca_grpo
-
 from agentevolver.module.exp_manager.exp_manager import ExperienceManager
 from agentevolver.module.tocf import apply_apatch_advantage_weighting, apatch_enabled
-from agentevolver.module.tocf.controller import TOCFController
 from agentevolver.module.tocf.state import TOCFCapabilityState
 from agentevolver.module.tocf.stats import TOCFStats
 from agentevolver.module.tocf.category import infer_task_category
@@ -443,41 +439,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
             if tocf_enabled
             else None
         )
-        self.tocf_controller = TOCFController(tocf_cfg) if tocf_enabled else None
-
-        from agentevolver.module.tocf.epatch import ExperienceBank, epatch_enabled
-        if epatch_enabled(config):
-            se_cfg = (tocf_cfg.get("self_evolution", {}) or {}) if tocf_cfg else {}
-            max_per_cat = int(se_cfg.get("max_per_category", 5) or 5)
-            bank_path = se_cfg.get("path", None)
-            if not bank_path and persistence_dir:
-                bank_path = os.path.join(str(persistence_dir), "experience_bank.json")
-            self.experience_bank = ExperienceBank(max_per_category=max_per_cat, path=bank_path)
-        else:
-            self.experience_bank = None
-
-        from agentevolver.module.tocf.spatch import (
-            StrategyBandit,
-            _resolve_strategy_library,
-            spatch_enabled,
-        )
-        if spatch_enabled(config):
-            sp_cfg = (tocf_cfg.get("strategy", {}) or {}) if tocf_cfg else {}
-            prior_alpha = float(sp_cfg.get("prior_alpha", 1.0) or 1.0)
-            prior_beta = float(sp_cfg.get("prior_beta", 1.0) or 1.0)
-            bandit_path = sp_cfg.get("path", None)
-            if not bandit_path and persistence_dir:
-                bandit_path = os.path.join(str(persistence_dir), "strategy_bandit.json")
-            self.strategy_bandit = StrategyBandit(
-                library=_resolve_strategy_library(config),
-                prior_alpha=prior_alpha,
-                prior_beta=prior_beta,
-                hierarchical_prior_weight=float(sp_cfg.get("hierarchical_prior_weight", 0.5) or 0.5),
-                path=bandit_path,
-            )
-        else:
-            self.strategy_bandit = None
-
         self._create_dataloader_from_manager(collate_fn, shuffle_trainset)  # ⭐ Create dataloader from the provided manager
 
 
@@ -621,7 +582,7 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
             self.val_task_manager.load_tasks_from_dataset(val_seed_dataset,env_type=self.config.env_service.env_type)
         else:
             num_loaded_val_tasks = 0
-            if 'val_on_test' in os.environ.get("DEBUG_ARG",'') or (self.config.data.val_type == 'test_normal' and self.config.env_service.env_type == "appworld"):
+            if 'val_on_test' in os.environ.get("DEBUG_ARG",'') or self.config.data.val_type == 'test_normal':
                 logger.warning("using test_normal as val dataset")
                 num_loaded_val_tasks += self.val_task_manager.load_tasks_from_environment(env_client,env_type=self.config.env_service.env_type,split="test_normal")
             else:
@@ -710,44 +671,10 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
             if self.tocf_stats_metrics_enabled:
                 self.tocf_stats.dump(f"epoch_{epoch}.json")
 
-            if self.tocf_controller is not None:
-                decision = self.tocf_controller.accept(
-                    self.tocf_controller.propose(self.tocf_stats)
-                )
-                if decision is not None and decision.accepted:
-                    self.train_dataset.apply_tocf_patches(decision)
-                metrics = self.tocf_controller.metrics()
-                if tracking_logger is not None and metrics:
-                    tracking_logger.log(data=metrics, step=self.global_steps)
-
         if self.tocf_stats is not None:
             self.tocf_stats.reset_window()
         if self.tocf_state is not None:
             self.tocf_state.save()
-
-
-    def _get_attribution_config(self):
-        """
-        Retrieves and validates the configuration for attribution-driven credit assignment, including the setup for API retry attempts.
-
-        Returns:
-            dict: The validated and possibly updated configuration dictionary.
-
-        Raises:
-            ValueError: If the required 'attribution_driven_credit_assignment' block is missing from the configuration.
-        """
-        if not hasattr(self.config, 'attribution_driven_credit_assignment'):
-            raise ValueError("attribution_driven_credit_assignment configuration block is required")
-
-        config = self.config.attribution_driven_credit_assignment
-
-        # set the default api_max_retries
-        if not hasattr(config, 'api_max_retries'):
-            config.api_max_retries = 200  # ⭐ Set the default number of API retries to 200
-            print(f"[attribution_config] Using default api_max_retries: {config.api_max_retries}")
-
-        return config
-
 
     def _validate_config(self):
         """
@@ -1255,67 +1182,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
             "best_checkpoint/removed_non_best": float(removed_count),
         }
     
-    def initialize_exp_pool(self):
-        """
-        """
-        for i, test_data in enumerate(self.val_dataloader):
-            test_batch = DataProto.from_single_dict(test_data)
-
-            # we only do validation on rule-based rm
-            if self.config.reward_model.enable and test_batch[0].non_tensor_batch["reward_model"]["style"] == "model":
-                return {}
-
-            batch_keys_to_pop = ["input_ids", "attention_mask", "position_ids"]
-            non_tensor_batch_keys_to_pop = ["raw_prompt_ids"]
-            if "multi_modal_data" in test_batch.non_tensor_batch:
-                non_tensor_batch_keys_to_pop.append("multi_modal_data")
-            if "raw_prompt" in test_batch.non_tensor_batch:
-                non_tensor_batch_keys_to_pop.append("raw_prompt")
-            if "tools_kwargs" in test_batch.non_tensor_batch:
-                non_tensor_batch_keys_to_pop.append("tools_kwargs")
-            if "extras" in test_batch.non_tensor_batch:
-                non_tensor_batch_keys_to_pop.append("extras")
-            test_gen_batch = test_batch.pop(
-                batch_keys=batch_keys_to_pop,
-                non_tensor_batch_keys=non_tensor_batch_keys_to_pop,
-            )
-
-            test_gen_batch.meta_info = {
-                "eos_token_id": self.tokenizer.eos_token_id,
-                "pad_token_id": self.tokenizer.pad_token_id,
-                "recompute_log_prob": False,
-                "do_sample": self.config.actor_rollout_ref.rollout.val_kwargs.do_sample,
-                "validate": True,
-            }
-            print(f"test_gen_batch meta info: {test_gen_batch.meta_info}")
-
-            # pad to be divisible by dp_size
-            # test_gen_batch_padded, pad_size = pad_dataproto_to_divisor(test_gen_batch, self.actor_rollout_wg.world_size)
-            if not self.async_rollout_mode:
-                raise NotImplementedError
-
-            else:
-                self.async_rollout_manager.wake_up()
-                tasks = [Task(
-                            task_id=test_gen_batch.non_tensor_batch["extras"][i]["task_id"],
-                            query=test_gen_batch.non_tensor_batch["extras"][i]['new_query'],
-                            metadata=_deserialize_metadata(test_gen_batch.non_tensor_batch["extras"][i]['metadata']),
-                            env_type=self.config.env_service.env_type,
-                            open_query=test_gen_batch.non_tensor_batch["extras"][i]['open_query'],
-                            # evaluator=gen_batch.non_tensor_batch['extras'][i]['evaluator'], # avoid potential bugs
-                         ) for i in range(len(test_gen_batch))]
-                task_exp_configs = self.exp_manager.get_complete_exp_configs(tasks, mode="validate")
-                print("=" * 10 + "start validate rollout" + "=" * 10)
-                trajectories = self.env_manager.rollout(tasks, task_exp_configs, mode="validate", epoch=f"test.1.{i}")  # ⭐ Execute the rollout to generate trajectories
-                print("=" * 10 + "end validate rollout" + "=" * 10)
-                self.async_rollout_manager.sleep()
-
-            # summarize in batch: updating experience pool
-            self.exp_manager.summarize_in_batch(trajectories)
-        
-        return
-
-
     def fit(self):
         """
         The training loop of PPO.
@@ -1341,12 +1207,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
         # spread parameters to vllm
         self.async_rollout_manager.wake_up()
         self.async_rollout_manager.sleep()
-
-        # initialize experience pool
-        if self.config.exp_manager.get("init_exp_before_training", False):
-            self.initialize_exp_pool()
-            if self.config.exp_manager.get("init_exp_only", False):
-                return
 
         # perform validation before training
         # currently, we only support validation using the reward_function.
@@ -1422,32 +1282,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
                             task_exp_configs = self.exp_manager.get_complete_exp_configs(tasks, mode="sample")
                             assert len(task_exp_configs)==len(tasks), "{len(task_exp_configs)=}, {len(gen_batch)=}"
 
-                            # ==================== E-Patch: inject self-evolved experience ====================
-                            if self.experience_bank is not None:
-                                from agentevolver.module.tocf.epatch import apply_experience_injection
-                                for _task in tasks:
-                                    apply_experience_injection(
-                                        _task,
-                                        self.experience_bank,
-                                        self.config,
-                                        mode="sample",
-                                        capability_state=self.tocf_state,
-                                    )
-                            # ==================== End E-Patch ====================
-
-                            # ==================== S-Patch: inject bandit-selected strategy ====================
-                            if self.strategy_bandit is not None:
-                                from agentevolver.module.tocf.spatch import apply_strategy_injection
-                                for _task in tasks:
-                                    apply_strategy_injection(
-                                        _task,
-                                        self.strategy_bandit,
-                                        self.config,
-                                        mode="sample",
-                                        capability_state=self.tocf_state,
-                                    )
-                            # ==================== End S-Patch ====================
-
                             print("=" * 10 + "start fit rollout" + "=" * 10)
                             trajectories = self.env_manager.rollout(tasks, task_exp_configs, mode="sample", epoch=f"train.{epoch}.{i}")  # ⭐ Generate trajectories using the environment manager
                             assert len(trajectories)>0, "{len(trajectories)=}?"
@@ -1486,43 +1320,8 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
                                             f"[tocf] periodic save_every_n_steps failed: {_e}"
                                         )
 
-                            # ==================== E-Patch: ingest successful trajectories ====================
-                            if self.experience_bank is not None:
-                                from agentevolver.module.tocf.epatch import ingest_from_trajectories
-                                ep_metrics = ingest_from_trajectories(
-                                    self.experience_bank,
-                                    trajectories,
-                                    self.config,
-                                    global_step=self.global_steps,
-                                )
-                                metrics.update(ep_metrics)
-                            # ==================== End E-Patch ingest ====================
-
-                            # ==================== S-Patch: update strategy bandit ====================
-                            if self.strategy_bandit is not None:
-                                from agentevolver.module.tocf.spatch import update_bandit_from_trajectories
-                                sp_metrics = update_bandit_from_trajectories(
-                                    self.strategy_bandit,
-                                    trajectories,
-                                    self.config,
-                                    capability_state=self.tocf_state,
-                                )
-                                metrics.update(sp_metrics)
-                            # ==================== End S-Patch update ====================
-
                             gen_batch_output = self.env_manager.to_dataproto(trajectories)
                             
-                            # update metrics about experience manager
-                            exp_mask_ratio = gen_batch_output.batch["exp_mask"].float().mean()
-                            metrics.update({"exp_mask_ratio": exp_mask_ratio.detach().item()})
-                            context_time_cost = [x.metadata["context_time_cost"] for x in trajectories if "context_time_cost" in x.metadata]
-                            if context_time_cost:
-                                metrics.update({
-                                  "exp_manager/context_cost_avg":   np.mean(context_time_cost),
-                                  "exp_manager/context_cost_max":   np.max(context_time_cost),
-                                  "exp_manager/context_cost_min":   np.min(context_time_cost),
-                                })
-
                             print(f"gen_batch_output.info batch.keys={gen_batch_output.batch.keys()}")
                             num_term_traj = sum([traj.is_terminated  for traj in trajectories])
                             num_not_none_traj = sum([len(traj.steps)>0  for traj in trajectories])
@@ -1555,10 +1354,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
                     batch = union_gen_batch_via_task_id(tasks, batch, gen_batch_output)  # ⭐ Merge generated batch with the current batch
 
                     batch.batch["response_mask"] = compute_response_mask(batch)  # ⭐ Compute and add response mask to the batch
-
-                    # update experience pool
-                    summary_task = self.exp_manager.submit_summary_task(trajectories, self.global_steps)
-
 
                     # balance the number of valid tokens on each dp rank.
                     # Note that this breaks the order of data inside the batch.
@@ -1669,20 +1464,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
                             multi_turn=self.config.actor_rollout_ref.rollout.multi_turn.enable,
                             config=self.config.algorithm,
                         )
-                        # shuchang
-                        # ==================== Begin ADCA GRPO  ====================
-                        attribution_cfg = self._get_attribution_config()
-                        if getattr(attribution_cfg, 'enable', False):
-                            batch, adca_metrics = apply_adca_grpo(
-                                batch=batch,
-                                attribution_cfg=attribution_cfg,
-                                tokenizer=self.tokenizer,
-                                global_steps=self.global_steps,
-                                epoch=epoch,
-                                i=i,
-                            )
-                            metrics.update(adca_metrics)
-                        # ==================== End ADCA GRPO ====================
                         # ==================== A-Patch: tag-aware advantage weighting ====================
                         if apatch_enabled(self.config):
                             batch, apatch_metrics = apply_apatch_advantage_weighting(
@@ -1722,12 +1503,6 @@ class AgentEvolverRayPPOTrainer(RayPPOTrainer):
                         actor_output_metrics = reduce_metrics(actor_output.meta_info["metrics"])
                         metrics.update(actor_output_metrics)
                     
-                    # collect summary tasks
-                    if summary_task is not None:
-                        time_cost = self.exp_manager.collect_summary_result(summary_task)
-                        metrics.update({"exp_manager/summary": time_cost})
-
-
                     # Log rollout generations if enabled
                     rollout_data_dir = self.config.trainer.get("rollout_data_dir", None)
                     if rollout_data_dir:

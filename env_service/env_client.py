@@ -230,7 +230,7 @@ class EnvClient:
 # 使用示例
 def main():
     client = EnvClient()
-    env_type = "appworld"
+    env_type = "bfcl"
 
     # 获取任务列表
     task_ids = client.get_env_profile(env_type)
@@ -248,7 +248,7 @@ def main():
     print(f"Created instance {instance_id} with query: {query}")
 
     # 执行动作
-    action = {"role": "assistant", "content": "print('hello appworld!!')"}
+    action = {"role": "assistant", "content": "I need to inspect the available tools first."}
     result = client.step(instance_id, action)
     print(f"Step result: {result}")
 
