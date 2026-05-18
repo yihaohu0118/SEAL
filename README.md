@@ -1,222 +1,89 @@
 <h1 align="center">
-  SEAL: Verifier-Grounded Agent-Environment Co-Evolution for Tool-Use Agents
+  SEAL: Synergistic Co-Evolution of Agents and Learning Environments
 </h1>
 
 <div align="center">
 
-[![GitHub](https://img.shields.io/badge/GitHub-yihaohu0118%2FSEAL-black.svg)](https://github.com/yihaohu0118/SEAL)
-[![License](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
-[![Python](https://img.shields.io/badge/Python-3.10%2B-green.svg)](#environment-setup)
-[![Benchmark](https://img.shields.io/badge/Benchmark-BFCL%20V3-orange.svg)](https://gorilla.cs.berkeley.edu/leaderboard.html)
+[![Homepage](https://img.shields.io/badge/Homepage-SEAL-blue.svg)](https://yihaohu0118.github.io/SEAL/)
+[![Paper](https://img.shields.io/badge/Paper-PDF-red.svg)](https://yihaohu0118.github.io/SEAL/static/pdfs/seal-paper.pdf)
+[![Poster](https://img.shields.io/badge/Poster-PDF-orange.svg)](https://yihaohu0118.github.io/SEAL/static/pdfs/seal-poster.pdf)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green.svg)](LICENSE)
 
 </div>
 
 <p align="center">
-SEAL is a reinforcement learning framework for improving multi-turn tool-use agents through verifier-grounded diagnosis and training-time environment evolution.
+  <b>Tool-Use Agents · Self-Evolution · Reinforcement Learning</b>
 </p>
 
----
+<p align="center">
+  Yihao Hu<sup>*,1,2</sup>, Zhihao Wen<sup>*,1</sup>, Xiujin Liu<sup>3</sup>, Pan Wang<sup>1,4</sup>, Xin Zhang<sup>1</sup>, Wei Wu<sup>1</sup>
+</p>
 
-## Updates
+<p align="center">
+  <sup>*</sup>Equal Contribution · <sup>1</sup>Ant Group · <sup>2</sup>Westlake University · <sup>3</sup>University of Michigan-Ann Arbor · <sup>4</sup>University of Science and Technology of China
+</p>
 
-- **[2026-05-18]** We release the BFCL-focused SEAL training code, data splits, and the full SEAL configuration used for the main multi-turn tool-use experiments.
+<p align="center">
+  <img src="https://yihaohu0118.github.io/SEAL/static/images/seal-overview.png" alt="SEAL overview" width="86%">
+</p>
 
 ## Overview
 
-SEAL studies how a tool-use agent and its learning environment can co-evolve during reinforcement learning. Standard RL for tool-use agents usually treats the environment as a fixed executor that returns sparse success or failure rewards. SEAL instead extracts executable evidence from failed trajectories and turns it into structured diagnostic signals.
+SEAL is a closed-loop co-evolution framework for interactive tool-use agents. It collects on-policy trajectories under executable verification, diagnoses failed rollouts into turn-level failure labels, and uses these diagnoses as a shared signal for both training-time interface evolution and model-side policy optimization.
 
-During training, these diagnostics are used in two places:
+In SEAL, the agent reveals its capability gaps, the learning interface adapts around these failures, and the policy internalizes the resulting feedback through GRPO. Evaluation remains strict: tool semantics, task labels, and the verifier are unchanged.
 
-- **Environment side:** the training-time interface exposes schema affordance cues, recovery-oriented feedback, and capability-specific hints while preserving the original tool API and verifier.
-- **Policy side:** diagnostic tags reweight the GRPO advantage so that more actionable failures contribute stronger learning signals.
-- **Evaluation side:** BFCL validation keeps the original verifier and disables train-only interface augmentation, preventing leakage into test-time evaluation.
+## Highlights
 
-This release is intentionally compact. It keeps the BFCL environment, the SEAL diagnostic path, the diagnosis-guided advantage weighting code, and one canonical training config: `exp/SEAL.yaml`.
+- **Verifier-grounded diagnosis:** executable traces are mapped to failure types such as invalid tool calls, argument mismatches, missing tool calls, recovery failures, and response mismatches.
+- **Training-time interface evolution:** BFCL observations expose schema affordances and recovery-oriented feedback without changing the test-time environment.
+- **Diagnosis-guided optimization:** diagnostic profiles reweight GRPO advantages while preserving the original verifier reward.
 
-## Environment Setup
-
-Clone the repository:
+## Quick Start
 
 ```bash
 git clone git@github.com:yihaohu0118/SEAL.git
 cd SEAL
-```
 
-Create a Python environment:
-
-```bash
 conda create -n seal python=3.10 -y
 conda activate seal
-```
-
-Install dependencies:
-
-```bash
 pip install -r requirements.txt
 ```
 
-The training stack uses `verl`, `vllm`, Ray, Hydra, and BFCL-specific evaluation utilities. Please adjust CUDA, PyTorch, and vLLM versions if your cluster uses a different CUDA stack.
-
-## BFCL Environment Setup
-
-SEAL uses an executable BFCL multi-turn environment. Prepare the BFCL environment once:
+Prepare and launch the BFCL environment:
 
 ```bash
 bash env_service/environments/bfcl/setup.sh
-```
-
-This script creates or reuses a `bfcl` conda environment, installs the BFCL evaluator, downloads the Berkeley Function Calling Leaderboard resources, and generates the processed multi-turn data used by the environment service.
-
-After setup, start the BFCL environment service:
-
-```bash
 conda activate bfcl
 bash env_service/launch_script/bfcl.sh
 ```
 
-By default, the service runs at:
-
-```text
-http://127.0.0.1:8082
-```
-
-You can override paths with environment variables:
-
-```bash
-export BFCL_DATA_PATH=/path/to/multi_turn_processed.jsonl
-export BFCL_SPLID_ID_PATH=/path/to/bfcl_400_split.json
-export BFCL_ANSWER_PATH=/path/to/bfcl_eval/possible_answer
-```
-
-## Quick Start
-
-In a second terminal, activate the SEAL training environment and launch the full training recipe:
+Run the SEAL training recipe:
 
 ```bash
 conda activate seal
 python launcher.py --conf exp/SEAL.yaml
 ```
 
-You can also ask the launcher to start BFCL before training:
-
-```bash
-python launcher.py --with-bfcl --conf exp/SEAL.yaml
-```
-
-The default config trains Qwen2.5-7B-Instruct with GRPO and SEAL's diagnostic interface:
-
-```yaml
-actor_rollout_ref:
-  model:
-    path: Qwen/Qwen2.5-7B-Instruct
-
-env_service:
-  env_type: bfcl
-  bfcl:
-    strict_tool_parser: true
-    enforce_available_tools: true
-    observation_lite:
-      enable: true
-      apply_to_validation: false
-
-tocf:
-  enable: true
-  feedback:
-    dense_reward:
-      enable: true
-  advantage:
-    apatch:
-      enable: true
-      dynamic:
-        enable: true
-```
-
-## Data
-
-The release includes the BFCL training and validation files used by the SEAL recipe:
+## Repository Layout
 
 ```text
-data/bfcl_train.parquet        Training prompts
-data/bfcl_eval_400.parquet     400-example BFCL multi-turn validation split
-data/bfcl_400_split.json       Category split metadata for validation
-```
-
-The executable BFCL data and answer files are generated by `env_service/environments/bfcl/setup.sh`.
-
-## Expected Outputs
-
-Training artifacts are written under:
-
-```text
-experiments/SEAL/
-```
-
-Diagnostic interface state and statistics are written under:
-
-```text
-experiments/SEAL/diagnostic_state/
-experiments/SEAL/diagnostic_stats/
-```
-
-Validation generations are saved by the trainer in the experiment output directory. The config uses:
-
-```yaml
-trainer:
-  project_name: SEAL
-  experiment_name: SEAL
-  test_freq: 10
-  val_before_train: true
-  save_best_checkpoint: true
-  keep_only_best_checkpoint: true
-```
-
-## Repository Structure
-
-```text
-agentevolver/                         RL trainer, task manager, rewards, and SEAL modules
-agentevolver/module/tocf/             Diagnostic state, statistics, and advantage weighting
-env_service/environments/bfcl/        Executable BFCL environment and diagnostic interface
-env_service/launch_script/bfcl.sh     BFCL service launcher
-config/                               Base Hydra configuration
-data/                                 Released BFCL train/evaluation metadata
 exp/SEAL.yaml                         Full SEAL training configuration
-launcher.py                           Convenience launcher for training and environment services
+env_service/environments/bfcl/        BFCL executable environment and interface adaptation
+agentevolver/module/tocf/             Diagnostic state and advantage reweighting
+agentevolver/module/task_manager/     Rewards, task adapters, and BFCL grader
+data/                                 Released BFCL train/evaluation split files
 ```
-
-## Core SEAL Components
-
-| Component | Location | Role |
-| --- | --- | --- |
-| Verifier-grounded progress and failure tags | `env_service/environments/bfcl/multi_turn_progress.py` | Extracts executable evidence from BFCL multi-turn trajectories. |
-| Training-time interface adaptation | `env_service/environments/bfcl/bfcl_env.py` | Adds schema affordance and diagnostic feedback only during training. |
-| Dense diagnostic reward metadata | `agentevolver/module/task_manager/rewards/bfcl_dense_env_grader.py` | Converts BFCL execution evidence into training metadata. |
-| Diagnosis-guided advantage weighting | `agentevolver/module/tocf/apatch.py` | Reweights GRPO advantages using diagnostic utility. |
-| Persistent diagnostic profile | `agentevolver/module/tocf/state.py` | Tracks capability-specific failure profiles across training. |
-
-## Notes on Fairness
-
-SEAL does not change BFCL tool signatures, tool outputs, task labels, or the validation verifier. The additional interface cues are training-time only. In `exp/SEAL.yaml`, this is enforced by:
-
-```yaml
-env_service:
-  bfcl:
-    observation_lite:
-      enable: true
-      apply_to_validation: false
-```
-
-This makes the training environment more informative while keeping the evaluation environment strict.
 
 ## Citation
 
-Paper metadata will be updated once available. If you use this codebase, please cite the SEAL repository:
-
 ```bibtex
-@misc{seal2026,
-  title        = {SEAL: Verifier-Grounded Agent-Environment Co-Evolution for Tool-Use Agents},
-  author       = {SEAL Contributors},
-  year         = {2026},
-  howpublished = {\url{https://github.com/yihaohu0118/SEAL}}
+@article{hu2026seal,
+  title={SEAL: Synergistic Co-Evolution of Agents and Learning Environments},
+  author={Hu, Yihao and Wen, Zhihao and Liu, Xiujin and Wang, Pan and Zhang, Xin and Wu, Wei},
+  journal={Preprint},
+  year={2026},
+  url={https://yihaohu0118.github.io/SEAL/}
 }
 ```
 
