@@ -38,7 +38,7 @@ algorithm:
 actor_rollout_ref:
   hybrid_engine: true
   model:
-    path: Qwen/Qwen2.5-7B-Instruct
+    path: Qwen/Qwen3.5-4B
     use_remove_padding: true
     enable_gradient_checkpointing: true
   rollout:
